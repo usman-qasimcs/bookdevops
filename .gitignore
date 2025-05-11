@@ -1,0 +1,31 @@
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-error.log*
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Build output
+build/
+dist/
+out/
+public/uploads/
+
+# Dependency directories
+client/node_modules/
+server/node_modules/
+
+#Log files
+*.log
+
+# macOS
+.DS_Store
+
+# IntelliJ
+.idea/
+
+# VS Code
+.vscode/
