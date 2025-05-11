@@ -1,33 +1,42 @@
-# Use a Node.js runtime as the base image
-FROM node:18-alpine
+# Multi-stage build for a React app with separate client and server folders
 
-# Set the working directory in the container
-WORKDIR /app
-
-# Copy package.json and package-lock.json to the working directory
-COPY package*.json ./
-
-# Install dependencies
+# Stage 1: Build the client application
+FROM node:18-alpine AS client-builder
+WORKDIR /app/client
+# Copy client package files
+COPY client/package*.json ./
+# Install client dependencies
 RUN npm install
-
-# Copy the entire project to the working directory
-COPY . .
-
-# Build the React application
+# Copy client source files
+COPY client/ ./
+# Build the client application
 RUN npm run build
 
-# Use a lightweight server to serve the built application
-#  You can change this to 'nginx' or another server if you prefer.
-FROM nginx:alpine
+# Stage 2: Set up the server
+FROM node:18-alpine AS server-builder
+WORKDIR /app/server
+# Copy server package files
+COPY server/package*.json ./
+# Install server dependencies
+RUN npm install --production
+# Copy server source files
+COPY server/ ./
 
-# Expose the port that the application will be served on
-EXPOSE 80
+# Stage 3: Final image
+FROM node:18-alpine
+WORKDIR /app
 
-# Copy the built application from the previous stage
-COPY --from=0 /app/dist /usr/share/nginx/html
+# Copy built client from client-builder stage
+COPY --from=client-builder /app/client/build /app/client/build
 
-# Optionally, if you have a custom nginx configuration, copy it here
-# COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Copy server files and node_modules from server-builder stage
+COPY --from=server-builder /app/server /app/server
 
-# Start the server (Nginx in this case)
-CMD ["nginx", "-g", "daemon off;"]
+# Set the working directory to the server folder
+WORKDIR /app/server
+
+# Expose the port your server is running on
+EXPOSE 5000
+
+# Start the server
+CMD ["npm", "start"]
