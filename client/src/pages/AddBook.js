@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { bookApi } from '../api';
 import './AddBook.css';
 
 function AddBook() {
@@ -28,7 +29,7 @@ function AddBook() {
         publicationYear: parseInt(publicationYear),
         pages: parseInt(pages),
       };
-      await axios.post('http://localhost:5000/books', newBook);
+      await bookApi.createBook(newBook);
       navigate('/');
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to add book');

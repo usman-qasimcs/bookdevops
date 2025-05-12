@@ -5,11 +5,16 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.client
+      args:
+        - REACT_APP_API_URL=/api  # Use API proxy through Nginx
     image: usmanqasim7/myapp3-client:latest
     ports:
       - "80:80"  # Maps host port 80 to container port 80
     depends_on:
       - server
+    networks:
+      - app-network
+
   server:
     build:
       context: .
@@ -20,4 +25,10 @@ services:
     environment:
       - MONGO_URI=mongodb+srv://usmanqasimcsa:usmanawt@cluster0.jnelddy.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
       - NODE_ENV=production
-      - CLIENT_URL=http://server
+      - CLIENT_URL=http://client  # Correct URL for CORS
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge

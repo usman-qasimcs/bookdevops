@@ -1,7 +1,7 @@
-let API_URL = 'http://localhost:5000'; // Default to localhost
+let API_URL = '/api';
 
-if (process.env.NODE_ENV === 'production') {
-    API_URL = process.env.REACT_APP_API_URL || 'http://13.48.190.148:5000'; // Or your EC2 IP
+if (process.env.NODE_ENV === 'development') {
+  API_URL = 'http://localhost:5000';
 }
 
 // Generic GET request function
@@ -13,8 +13,6 @@ async function fetchData(endpoint) {
       headers: {
         'Content-Type': 'application/json',
       },
-      // Only include credentials if you're using cookies for authentication
-      // credentials: 'include',
     });
     
     if (!response.ok) {

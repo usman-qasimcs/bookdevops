@@ -14,7 +14,7 @@ const ec2PublicIP = 'http://13.48.190.148'; // Add your EC2 instance's public IP
 
 // Set up CORS with specific configuration
 app.use(cors({
-  origin: [clientURL, 'http://localhost:3000', 'http://localhost', ec2PublicIP], // Include EC2 IP
+  origin: [clientURL, 'http://localhost:3000', 'http://localhost', ec2PublicIP, 'http://client'],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   credentials: true
 }));
