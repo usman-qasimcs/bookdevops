@@ -1,6 +1,6 @@
 // src/api.js
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const API_URL = process.env.REACT_APP_API_URL || 'http://13.48.190.148:5000';
 
 // Generic GET request function
 async function fetchData(endpoint) {
