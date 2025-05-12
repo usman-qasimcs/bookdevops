@@ -1,6 +1,8 @@
-// src/api.js
+let API_URL = 'http://localhost:5000'; // Default to localhost
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://13.48.190.148:5000';
+if (process.env.NODE_ENV === 'production') {
+    API_URL = process.env.REACT_APP_API_URL || 'http://13.48.190.148:5000'; // Or your EC2 IP
+}
 
 // Generic GET request function
 async function fetchData(endpoint) {
