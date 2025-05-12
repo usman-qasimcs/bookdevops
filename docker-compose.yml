@@ -9,7 +9,7 @@ services:
         - REACT_APP_API_URL=/api  # Use API proxy through Nginx
     image: usmanqasim7/myapp3-client:latest
     ports:
-      - "80:80"  # Maps host port 80 to container port 80
+      - "3000:80"  # Maps host port 80 to container port 80
     depends_on:
       - server
     networks:
