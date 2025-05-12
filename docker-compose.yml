@@ -5,7 +5,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.client
-    image: ru0300usman/myapp3-client:latest
+    image: usmanqasim7/myapp3-client:latest
     ports:
       - "80:80"  # Maps host port 80 to container port 80
     depends_on:
@@ -14,7 +14,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.server
-    image: ru0300usman/myapp3-server:latest
+    image: usmanqasim7/myapp3-server:latest
     ports:
       - "5000:5000"  # Maps host port 5000 to container port 5000
     environment:
