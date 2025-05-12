@@ -1,24 +1,31 @@
 pipeline {
     agent any
+    
+    environment {
+        // Replace this with your actual EC2 instance's public IP address
+        AWS_INSTANCE_IP = "13.48.190.148"  
+    }
 
     stages {
         stage('Clean Previous Deployment') {
             steps {
-               sh '''
-                if [ -d "/var/lib/jenkins/DevOps/" ]; then
+                sh '''
+                 if [ -d "/var/lib/jenkins/DevOps/" ]; then
                     find "/var/lib/jenkins/DevOps/" -mindepth 1 -delete
                     echo "Contents of /var/lib/jenkins/DevOps/ have been removed."
-                else
+                 else
                     echo "Directory /var/lib/jenkins/DevOps/ does not exist."
                     mkdir -p /var/lib/jenkins/DevOps/
-                fi
+                 fi
                 '''
             }
         }
         
         stage('Fetch Code') {
             steps {
-                sh 'git clone https://github.com/usman-qasimcs/bookdevops.git /var/lib/jenkins/DevOps/bookapp/'
+                git branch: 'main', url: 'https://github.com/usman-qasimcs/bookdevops.git',  
+                    changelog: false, poll: false, 
+                    destination: '/var/lib/jenkins/DevOps/bookapp/'
             }
         }
 
@@ -27,45 +34,58 @@ pipeline {
                 dir('/var/lib/jenkins/DevOps/bookapp/') {
                     // Ensure Docker configurations are in place
                     sh '''
-                    if [ ! -f "Dockerfile" ]; then
-                        echo "Creating Dockerfile..."
-                        cat > Dockerfile << 'EOL'
-# Multi-stage build for a React app with separate client and server folders
+                    if [ ! -f "Dockerfile.client" ]; then
+                        echo "Creating Dockerfile.client..."
+                        cat > Dockerfile.client << 'EOL'
+# Client Dockerfile
+FROM node:18-alpine as build
 
-# Stage 1: Build the client application
-FROM node:18-alpine AS client-builder
-WORKDIR /app/client
-# Copy client package files
-COPY ./client/package*.json ./
-# Install client dependencies
-RUN npm install
-# Copy client source files
-COPY ./client/ ./
-# Build the client application
-RUN npm run build
-
-# Stage 2: Set up the server
-FROM node:18-alpine AS server-builder
-WORKDIR /app/server
-# Copy server package files
-COPY ./server/package*.json ./
-# Install server dependencies
-RUN npm install --production
-# Copy server source files
-COPY ./server/ ./
-
-# Stage 3: Final image
-FROM node:18-alpine
+# Set working directory
 WORKDIR /app
 
-# Copy built client from client-builder stage
-COPY --from=client-builder /app/client/build /app/client/build
+# Copy package.json and package-lock.json
+COPY client/package*.json ./
 
-# Copy server files and node_modules from server-builder stage
-COPY --from=server-builder /app/server /app/server
+# Install dependencies
+RUN npm install
 
-# Set the working directory to the server folder
-WORKDIR /app/server
+# Copy client source files
+COPY client/ ./
+
+# Build the React application
+RUN npm run build
+
+# Production stage
+FROM nginx:alpine
+
+# Copy built files from previous stage to nginx serve directory
+COPY --from=build /app/build /usr/share/nginx/html
+
+# Expose port 80
+EXPOSE 80
+
+# Start nginx
+CMD ["nginx", "-g", "daemon off;"]
+EOL
+                    fi
+
+                    if [ ! -f "Dockerfile.server" ]; then
+                        echo "Creating Dockerfile.server..."
+                        cat > Dockerfile.server << 'EOL'
+# Server Dockerfile
+FROM node:18-alpine
+
+# Set working directory
+WORKDIR /app
+
+# Copy package.json and package-lock.json
+COPY server/package*.json ./
+
+# Install dependencies
+RUN npm install --production
+
+# Copy server source files
+COPY server/ ./
 
 # Expose the port your server is running on
 EXPOSE 5000
@@ -75,22 +95,33 @@ CMD ["npm", "start"]
 EOL
                     fi
 
-                    if [ ! -f "docker-compose.yml" ]; then
-                        echo "Creating docker-compose.yml..."
-                        cat > docker-compose.yml << 'EOL'
+                    // Create or update docker-compose.yml with the correct EC2 IP
+                    echo "Creating/updating docker-compose.yml with EC2 IP: \${AWS_INSTANCE_IP}"
+                    cat > docker-compose.yml << EOL
 version: "3.8"
 
 services:
-  frontend:
-    build: .
-    image: ru0300usman/myapp3:latest
+  client:
+    build:
+      context: .
+      dockerfile: Dockerfile.client
+    image: ru0300usman/myapp3-client:latest
     ports:
-      - "4000:5000"  # Maps port 4000 on host to port 5000 in container (server port)
+      - "80:80"  # Maps host port 80 to container port 80
+    depends_on:
+      - server
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile.server
+    image: ru0300usman/myapp3-server:latest
+    ports:
+      - "5000:5000"  # Maps host port 5000 to container port 5000
     environment:
       - MONGO_URI=mongodb+srv://usmanqasimcsa:usmanawt@cluster0.jnelddy.mongodb.net/
       - NODE_ENV=production
+      - CLIENT_URL=http://server
 EOL
-                    fi
                     '''
                 }
             }
@@ -103,6 +134,13 @@ EOL
                 }
             }
         }
+        
+        stage('Verify Deployment') {
+            steps {
+                sh 'curl -s http://127.0.0.1:5000/health || echo "Server health check failed"'
+                sh 'curl -s http://13.48.190.148:80 | grep -q "root" && echo "Client is running" || echo "Client check failed"'
+            }
+        }
     }
 
     post {
@@ -111,6 +149,7 @@ EOL
         }
         failure {
             echo 'Deployment failed!'
+            sh 'docker compose -p bookdevops down || echo "No containers to stop"'
         }
     }
 }

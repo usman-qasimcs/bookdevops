@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import axios from 'axios';
+import { bookApi } from '../api';
 import './Library.css';
 
 function Library() {
@@ -12,8 +12,8 @@ function Library() {
   useEffect(() => {
     const fetchBooks = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/books');
-        setBooks(response.data);
+        const data = await bookApi.getAllBooks();
+        setBooks(data);
       } catch (err) {
         setError(err.message);
       } finally {
@@ -27,13 +27,12 @@ function Library() {
   const handleDeleteBook = async (id) => {
     try {
       console.log(`Attempting to delete book with ID: ${id}`);
-      await axios.delete(`http://localhost:5000/books/${id}`);
-      // Update state to remove the deleted book
+      await bookApi.deleteBook(id);
       setBooks(prevBooks => prevBooks.filter(book => book._id !== id));
       setExpandedBookId(null);
     } catch (err) {
       console.error('Delete error:', err);
-      setError(err.response?.data?.error || 'Failed to delete book');
+      setError(err.message || 'Failed to delete book');
     }
   };
 

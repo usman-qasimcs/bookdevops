@@ -8,10 +8,21 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-app.use(cors());
+// Get client URL from environment variable or use a default that includes the port
+const clientURL = process.env.CLIENT_URL || 'http://localhost:3000';
+
+// Set up CORS with specific configuration
+app.use(cors({
+  // Allow requests from the client URL or accept any origin during development
+  origin: [clientURL, 'http://localhost:3000', 'http://localhost'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  credentials: true
+}));
+
 app.use(express.json());
 
-const MONGODB_URI = process.env.MONGODB_URI;
+// MongoDB Connection
+const MONGODB_URI = process.env.MONGO_URI || process.env.MONGODB_URI;
 
 mongoose.connect(MONGODB_URI, {
     useNewUrlParser: true,
@@ -35,8 +46,12 @@ const bookSchema = new mongoose.Schema({
 
 const Book = mongoose.model('Book', bookSchema);
 
-// --- API Endpoints ---
+// Add a health check endpoint for monitoring
+app.get('/health', (req, res) => {
+    res.status(200).json({ status: 'Server is running' });
+});
 
+// --- API Endpoints ---
 app.get('/books', async (req, res) => {
     try {
         const books = await Book.find();
@@ -130,4 +145,8 @@ app.patch('/books/:id/status', async (req, res) => {
     }
 });
 
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+// Start the server
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+    console.log(`Accepting requests from client at ${clientURL} and localhost:3000`);
+});

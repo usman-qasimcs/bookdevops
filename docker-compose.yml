@@ -1,14 +1,23 @@
 version: "3.8"
 
 services:
-  frontend:
-    build: .
-    image: ru0300usman/myapp3:latest
+  client:
+    build:
+      context: .
+      dockerfile: Dockerfile.client
+    image: ru0300usman/myapp3-client:latest
     ports:
-      - "3000:80"
+      - "80:80"  # Maps host port 80 to container port 80
+    depends_on:
+      - server
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile.server
+    image: ru0300usman/myapp3-server:latest
+    ports:
+      - "5000:5000"  # Maps host port 5000 to container port 5000
     environment:
       - MONGO_URI=mongodb+srv://usmanqasimcsa:usmanawt@cluster0.jnelddy.mongodb.net/
       - NODE_ENV=production
-    # No local dependencies since we're using MongoDB Atlas
-
-# No volumes needed since we're using MongoDB Atlas cloud database
+      - CLIENT_URL=http://server
