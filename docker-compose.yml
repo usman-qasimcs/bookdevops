@@ -9,7 +9,7 @@ services:
         - REACT_APP_API_URL=/api  # Use API proxy through Nginx
     image: usmanqasim7/myapp3-client:latest
     ports:
-      - "3000:80"  # Maps host port 80 to container port 80
+      - "4000:80"  # Maps host port 80 to container port 80
     depends_on:
       - server
     networks:
@@ -21,7 +21,7 @@ services:
       dockerfile: Dockerfile.server
     image: usmanqasim7/myapp3-server:latest
     ports:
-      - "5000:5000"  # Maps host port 5000 to container port 5000
+      - "6000:5000"  # Maps host port 5000 to container port 5000
     environment:
       - MONGO_URI=mongodb+srv://usmanqasimcsa:usmanawt@cluster0.jnelddy.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
       - NODE_ENV=production
