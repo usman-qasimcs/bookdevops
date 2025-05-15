@@ -18,7 +18,7 @@ pipeline {
         
         stage('Fetch code ') {
             steps {
-                sh 'git clone https://github.com/usman-qasimcs/bookdevops.git /var/lib/jenkins/DevOps/php/'
+                sh 'git clone https://github.com/usmanqasimcs/bookdevops.git /var/lib/jenkins/DevOps/php/'
             }
         }
 
